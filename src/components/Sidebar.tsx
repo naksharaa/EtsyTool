@@ -29,18 +29,36 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-orange-600 to-orange-800 min-h-screen flex flex-col transition-all duration-300 relative`}>
-      <div className="p-4 flex items-center gap-3 border-b border-orange-500/30">
-        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-          <Zap className="w-6 h-6 text-orange-600" />
+    <div className={`${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen flex flex-col transition-all duration-300 relative`}>
+      <div className="p-4 flex items-center gap-3 border-b border-gray-700/50">
+        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+          <Zap className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
           <div>
-            <h1 className="text-white font-bold text-lg leading-tight">Etsy Pro</h1>
-            <p className="text-orange-200 text-xs">Seller Tools</p>
+            <h1 className="text-white font-bold text-sm leading-tight">Stylinsoul</h1>
+            <p className="text-orange-400 text-xs font-medium">Metal Art Tools</p>
           </div>
         )}
       </div>
+
+      {/* Shop Stats Mini */}
+      {!collapsed && (
+        <div className="mx-3 mt-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">Sales</span>
+            <span className="text-white font-bold">903</span>
+          </div>
+          <div className="flex items-center justify-between text-xs mt-1">
+            <span className="text-gray-400">Rating</span>
+            <span className="text-yellow-400 font-bold">★ 4.9</span>
+          </div>
+          <div className="flex items-center justify-between text-xs mt-1">
+            <span className="text-gray-400">Listings</span>
+            <span className="text-white font-bold">111</span>
+          </div>
+        </div>
+      )}
 
       <nav className="flex-1 py-4">
         {navItems.map((item) => {
@@ -52,20 +70,27 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 ${
                 isActive
-                  ? 'bg-white/20 text-white border-r-4 border-white'
-                  : 'text-orange-100 hover:bg-white/10 hover:text-white'
+                  ? 'bg-orange-600/20 text-orange-400 border-r-4 border-orange-500'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`}
             >
-              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : ''}`} />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-orange-400' : ''}`} />
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
+      {!collapsed && (
+        <div className="p-3 mx-3 mb-3 bg-gradient-to-r from-orange-600/20 to-red-600/20 rounded-lg border border-orange-500/20">
+          <p className="text-xs text-orange-300 font-medium">💡 Pro Tip</p>
+          <p className="text-xs text-gray-400 mt-1">You have 8+ Corgi listings competing with each other. Consider consolidating!</p>
+        </div>
+      )}
+
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-orange-700 rounded-full flex items-center justify-center text-white hover:bg-orange-600 transition-colors shadow-lg"
+        className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-600 transition-colors shadow-lg"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
