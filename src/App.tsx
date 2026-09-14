@@ -6,6 +6,7 @@ import ListingOptimizer from './components/ListingOptimizer';
 import SalesAnalyzer from './components/SalesAnalyzer';
 import NewListing from './components/NewListing';
 import ApiSettings from './components/ApiSettings';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Bell, ExternalLink } from 'lucide-react';
 
 export default function App() {
@@ -13,13 +14,13 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard />;
-      case 'niche-finder': return <NicheFinder />;
-      case 'listing-optimizer': return <ListingOptimizer />;
-      case 'sales-analyzer': return <SalesAnalyzer />;
-      case 'new-listing': return <NewListing />;
-      case 'settings': return <ApiSettings />;
-      default: return <Dashboard />;
+      case 'dashboard': return <ErrorBoundary><Dashboard /></ErrorBoundary>;
+      case 'niche-finder': return <ErrorBoundary><NicheFinder /></ErrorBoundary>;
+      case 'listing-optimizer': return <ErrorBoundary><ListingOptimizer /></ErrorBoundary>;
+      case 'sales-analyzer': return <ErrorBoundary><SalesAnalyzer /></ErrorBoundary>;
+      case 'new-listing': return <ErrorBoundary><NewListing /></ErrorBoundary>;
+      case 'settings': return <ErrorBoundary><ApiSettings /></ErrorBoundary>;
+      default: return <ErrorBoundary><Dashboard /></ErrorBoundary>;
     }
   };
 
