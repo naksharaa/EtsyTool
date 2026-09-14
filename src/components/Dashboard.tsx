@@ -6,12 +6,12 @@ import {
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const revenueData = [
-  { month: 'Jul', sales: 52, revenue: 1859 },
-  { month: 'Aug', sales: 68, revenue: 2434 },
-  { month: 'Sep', sales: 95, revenue: 3399 },
-  { month: 'Oct', sales: 120, revenue: 4290 },
-  { month: 'Nov', sales: 145, revenue: 5192 },
-  { month: 'Dec', sales: 168, revenue: 6016 },
+  { month: 'Jul', sales: 18, revenue: 643 },
+  { month: 'Aug', sales: 22, revenue: 786 },
+  { month: 'Sep', sales: 28, revenue: 1001 },
+  { month: 'Oct', sales: 35, revenue: 1251 },
+  { month: 'Nov', sales: 42, revenue: 1501 },
+  { month: 'Dec', sales: 48, revenue: 1715 },
 ];
 
 const viewsData = [
@@ -65,10 +65,32 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Eye className="w-5 h-5" />} label="Views (30d)" value="21,450" change="+32%" positive={true} color="blue" />
-        <StatCard icon={<Heart className="w-5 h-5" />} label="Favorites" value="1,847" change="+18%" positive={true} color="pink" />
-        <StatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue (30d)" value="$6,016" change="+42%" positive={true} color="green" />
-        <StatCard icon={<Package className="w-5 h-5" />} label="Active Listings" value="111" change="+12" positive={true} color="purple" />
+        <StatCard icon={<Eye className="w-5 h-5" />} label="Views (30d)" value="8,450" change="+15%" positive={true} color="blue" />
+        <StatCard icon={<Heart className="w-5 h-5" />} label="Total Favorites" value="425" change="+10%" positive={true} color="pink" />
+        <StatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue (30d)" value="$1,715" change="+14%" positive={true} color="green" />
+        <StatCard icon={<Package className="w-5 h-5" />} label="Active Listings" value="111" change="+8" positive={true} color="purple" />
+      </div>
+
+      {/* Lifetime Stats */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 text-white">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold">903</p>
+            <p className="text-xs text-gray-300">Lifetime Sales</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">$32,273</p>
+            <p className="text-xs text-gray-300">Lifetime Revenue</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">258</p>
+            <p className="text-xs text-gray-300">5-Star Reviews</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">$35.74</p>
+            <p className="text-xs text-gray-300">Avg Order Value</p>
+          </div>
+        </div>
       </div>
 
       {/* Key Metrics Row */}
@@ -77,16 +99,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500">Conversion Rate</p>
-              <p className="text-xl font-bold text-gray-800">1.8%</p>
+              <p className="text-xl font-bold text-gray-800">0.6%</p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Good</span>
+              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Needs Work</span>
             </div>
           </div>
           <div className="mt-2 w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full" style={{ width: '60%' }}></div>
+            <div className="h-full bg-amber-500 rounded-full" style={{ width: '30%' }}></div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Etsy avg: 1.5-3%</p>
+          <p className="text-xs text-gray-400 mt-1">Etsy avg: 1.5-3% · You're below average</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
@@ -95,7 +117,7 @@ export default function Dashboard() {
               <p className="text-xl font-bold text-gray-800">$35.74</p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Same price all items</span>
+              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Flat pricing</span>
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-2">💡 Offer size variants to increase AOV to $50+</p>
@@ -213,7 +235,8 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-5 text-white">
         <div className="flex items-center gap-3 mb-3">
           <Flame className="w-6 h-6" />
-          <h3 className="font-bold text-lg">Quick Wins for This Week</h3>
+          <h3 className="font-bold text-lg">Quick Wins to Boost Revenue</h3>
+          <span className="text-sm bg-white/20 px-2 py-0.5 rounded-full">Potential +$900/month</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
