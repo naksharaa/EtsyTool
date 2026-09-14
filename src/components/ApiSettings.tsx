@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Store, CheckCircle, AlertCircle, ExternalLink, Shield, RefreshCw, Copy, Eye, EyeOff, Info, Loader } from 'lucide-react';
+import { Key, Store, CheckCircle, AlertCircle, ExternalLink, Shield, RefreshCw, Copy, Eye, EyeOff, Info } from 'lucide-react';
 
 export default function ApiSettings() {
   const [apiKey, setApiKey] = useState('');
@@ -10,47 +10,52 @@ export default function ApiSettings() {
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
 
-  const handleTestConnection = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!apiKey || !shopId) {
-      setStatus('error');
-      setStatusMessage('Please enter both API key and shop ID');
-      return;
-    }
-
-    setTesting(true);
-    setStatus('testing');
-    setStatusMessage('Testing connection to Etsy API...');
-
-    // Simulate API connection
-    setTimeout(() => {
-      setTesting(false);
-      if (apiKey.length >= 10 && shopId) {
-        setStatus('success');
-        setConnected(true);
-        setStatusMessage('✅ Successfully connected to Etsy API! Your 111 listings are now syncing.');
-      } else {
+  const handleTestConnection = () => {
+    try {
+      if (!apiKey || !shopId) {
         setStatus('error');
-        setStatusMessage('❌ Invalid API key. Please check your keystring and try again.');
+        setStatusMessage('Please enter both API key and shop ID');
+        return;
       }
-    }, 2000);
+
+      setTesting(true);
+      setStatus('testing');
+      setStatusMessage('Testing connection to Etsy API...');
+
+      // Simulate API connection
+      setTimeout(() => {
+        try {
+          if (apiKey.length >= 10 && shopId) {
+            setStatus('success');
+            setConnected(true);
+            setStatusMessage('Successfully connected to Etsy API! Your 111 listings are now syncing.');
+          } else {
+            setStatus('error');
+            setStatusMessage('Invalid API key. Please check your keystring and try again.');
+          }
+        } catch (err) {
+          setStatus('error');
+          setStatusMessage('An error occurred. Please try again.');
+        } finally {
+          setTesting(false);
+        }
+      }, 2000);
+    } catch (err) {
+      setStatus('error');
+      setStatusMessage('An error occurred. Please try again.');
+      setTesting(false);
+    }
   };
 
-  const handleDisconnect = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDisconnect = () => {
     setConnected(false);
     setStatus('idle');
     setStatusMessage('');
     setApiKey('');
   };
 
-  const handleExternalLink = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const handleGetApiKey = () => {
+    window.open('https://www.etsy.com/developers/register', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -70,7 +75,7 @@ export default function ApiSettings() {
           {connected ? (
             <CheckCircle className="w-8 h-8 text-green-600" />
           ) : status === 'testing' ? (
-            <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
           ) : status === 'error' ? (
             <AlertCircle className="w-8 h-8 text-red-600" />
           ) : (
@@ -134,7 +139,11 @@ export default function ApiSettings() {
               </button>
               <button 
                 type="button"
-                onClick={() => navigator.clipboard.writeText(apiKey)}
+                onClick={() => {
+                  if (apiKey) {
+                    navigator.clipboard.writeText(apiKey);
+                  }
+                }}
                 className="p-1.5 text-gray-400 hover:text-gray-600"
               >
                 <Copy className="w-4 h-4" />
@@ -177,13 +186,13 @@ export default function ApiSettings() {
               </>
             )}
           </button>
-          <a 
-            href="https://www.etsy.com/developers/register"
-            onClick={(e) => handleExternalLink(e, 'https://www.etsy.com/developers/register')}
+          <button 
+            type="button"
+            onClick={handleGetApiKey}
             className="text-orange-600 text-sm font-medium flex items-center gap-1 hover:text-orange-700"
           >
             Get API Key <ExternalLink className="w-3 h-3" />
-          </a>
+          </button>
         </div>
       </div>
 
