@@ -1,9 +1,9 @@
 import React from 'react';
 import {
   Eye, Heart, DollarSign, Package, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, Star, TrendingUp, Flame, Target
+  AlertTriangle, Flame
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const revenueData = [
   { month: 'Jul', sales: 52, revenue: 1859 },

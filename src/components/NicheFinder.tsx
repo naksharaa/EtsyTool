@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Search, TrendingUp, TrendingDown, Minus, Target, Sparkles, ArrowRight, Info, Flame, CheckCircle
+  Search, TrendingUp, TrendingDown, Minus, Target, Sparkles, ArrowRight, Info
 } from 'lucide-react';
 
 interface NicheData {
