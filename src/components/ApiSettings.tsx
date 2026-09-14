@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Store, CheckCircle, AlertCircle, ExternalLink, Shield, RefreshCw, Copy, Eye, EyeOff, Info, Save, Trash2 } from 'lucide-react';
+import { testConnection, fetchShopData, fetchListings, fetchReceipts, getStoredListings, getStoredShop, getLastSyncTime, clearAllData } from '../services/etsyApi';
 
 const STORAGE_KEY_API = 'stylinsoul_api_key';
 const STORAGE_KEY_SECRET = 'stylinsoul_shared_secret';
@@ -22,27 +23,35 @@ export default function ApiSettings() {
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0, status: '' });
   const [syncedData, setSyncedData] = useState<any>(null);
 
-  // Load saved credentials on mount
+  // Load saved credentials and data on mount
   useEffect(() => {
     try {
       const savedKey = localStorage.getItem(STORAGE_KEY_API);
       const savedSecret = localStorage.getItem(STORAGE_KEY_SECRET);
       const savedShop = localStorage.getItem(STORAGE_KEY_SHOP);
       const savedConnected = localStorage.getItem(STORAGE_KEY_CONNECTED);
-      const savedListings = localStorage.getItem('stylinsoul_listings');
 
       if (savedKey) setApiKey(savedKey);
       if (savedSecret) setSharedSecret(savedSecret);
       if (savedShop) setShopId(savedShop);
+      
+      // Load real data from localStorage
+      const storedListings = getStoredListings();
+      const storedShop = getStoredShop();
+      const lastSync = getLastSyncTime();
+
+      if (storedListings.length > 0) {
+        setSyncedData(storedListings);
+      }
+
       if (savedConnected === 'true') {
         setConnected(true);
         setStatus('success');
-        setStatusMessage('Previously connected. Your credentials are saved.');
-      }
-      if (savedListings) {
-        try {
-          setSyncedData(JSON.parse(savedListings));
-        } catch (e) {}
+        if (storedShop) {
+          setStatusMessage(`Connected to ${storedShop.shop_name}. Last sync: ${lastSync ? new Date(lastSync).toLocaleString() : 'Never'}`);
+        } else {
+          setStatusMessage('Previously connected. Your credentials are saved.');
+        }
       }
     } catch (e) {
       // localStorage not available
@@ -75,86 +84,51 @@ export default function ApiSettings() {
       setStatus('testing');
       setStatusMessage('Connecting to Etsy API...');
 
-      // Attempt real Etsy API call
-      try {
-        // Etsy Open API v3 endpoint
-        const response = await fetch(`https://openapi.etsy.com/v3/application/shops/${shopId}`, {
-          method: 'GET',
-          headers: {
-            'x-api-key': apiKey,
-            'Content-Type': 'application/json'
-          }
+      // Test connection using real Etsy API
+      const result = await testConnection(apiKey, shopId);
+
+      if (result.success && result.shop) {
+        setStatus('success');
+        setConnected(true);
+        setStatusMessage(`Connected to ${result.shop.shop_name}! Fetching shop data...`);
+        
+        // Save connection
+        try {
+          localStorage.setItem(STORAGE_KEY_CONNECTED, 'true');
+        } catch (e) {}
+
+        // Fetch shop data
+        const shopData = await fetchShopData(apiKey, shopId);
+        if (shopData) {
+          setStatusMessage(`Connected to ${shopData.shop_name}! Fetching listings...`);
+        }
+
+        // Fetch listings with progress
+        const listings = await fetchListings(apiKey, shopId, (current, total, status) => {
+          setSyncProgress({ current, total, status });
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setStatus('success');
-          setConnected(true);
-          setStatusMessage(`Connected to ${data.name || shopId}! Fetching listings...`);
+        if (listings.length > 0) {
+          setSyncedData(listings);
+          setStatusMessage(`Successfully synced ${listings.length} listings from ${result.shop.shop_name}!`);
           
-          // Save connection
-          try {
-            localStorage.setItem(STORAGE_KEY_CONNECTED, 'true');
-            localStorage.setItem('stylinsoul_shop_data', JSON.stringify(data));
-          } catch (e) {}
-
-          // Now fetch listings
-          await fetchListings();
-        } else if (response.status === 401) {
-          setStatus('error');
-          setStatusMessage('Authentication failed. Please check your API key and shared secret.');
-        } else if (response.status === 404) {
-          setStatus('error');
-          setStatusMessage(`Shop "${shopId}" not found. Please verify your shop name.`);
+          // Fetch receipts for revenue data
+          setStatusMessage(`Fetching order history...`);
+          await fetchReceipts(apiKey, shopId);
+          
+          setStatusMessage(`✅ Sync complete! ${listings.length} listings loaded.`);
         } else {
-          const errorData = await response.json().catch(() => ({}));
-          setStatus('error');
-          setStatusMessage(`API Error: ${errorData.message || response.statusText}`);
+          setStatusMessage('Connected but no listings found.');
         }
-      } catch (fetchError: any) {
-        // CORS or network error - likely due to browser restrictions
-        if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('CORS')) {
-          setStatus('error');
-          setStatusMessage('Browser security restriction (CORS). Etsy API requires server-side authentication. Please use a backend proxy or the Etsy developer console for testing.');
-        } else {
-          setStatus('error');
-          setStatusMessage(`Connection error: ${fetchError.message}`);
-        }
+      } else {
+        setStatus('error');
+        setStatusMessage(result.error || 'Connection failed');
       }
     } catch (err: any) {
       setStatus('error');
-      setStatusMessage(`Unexpected error: ${err.message || 'Unknown error'}`);
+      setStatusMessage(`Error: ${err.message || 'Unknown error'}`);
     } finally {
       setTesting(false);
-    }
-  };
-
-  const fetchListings = async () => {
-    try {
-      setStatusMessage('Fetching your listings...');
-      
-      const response = await fetch(`https://openapi.etsy.com/v3/application/shops/${shopId}/listings/active`, {
-        method: 'GET',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const count = data.count || 0;
-        setStatusMessage(`Successfully connected! Found ${count} active listings.`);
-        
-        try {
-          localStorage.setItem('stylinsoul_listings', JSON.stringify(data.results || []));
-          setSyncedData(data.results || []);
-        } catch (e) {}
-      } else {
-        console.error('Failed to fetch listings:', response.status);
-      }
-    } catch (err) {
-      console.error('Error fetching listings:', err);
     }
   };
 
@@ -168,70 +142,37 @@ export default function ApiSettings() {
     setSyncing(true);
     setSyncProgress({ current: 0, total: 111, status: 'Starting sync...' });
 
-    // Simulate sync progress since real API calls may be blocked by CORS
-    const steps = [
-      { current: 20, total: 111, status: 'Fetching shop data...' },
-      { current: 45, total: 111, status: 'Loading listings...' },
-      { current: 75, total: 111, status: 'Analyzing SEO scores...' },
-      { current: 95, total: 111, status: 'Checking for issues...' },
-      { current: 111, total: 111, status: 'Sync complete!' }
-    ];
-
-    for (let i = 0; i < steps.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setSyncProgress(steps[i]);
-    }
-
-    // Try real API call first
     try {
-      const response = await fetch(`https://openapi.etsy.com/v3/application/shops/${shopId}/listings/active?limit=100`, {
-        method: 'GET',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json'
-        }
+      // Fetch shop data
+      setSyncProgress({ current: 10, total: 111, status: 'Fetching shop data...' });
+      await fetchShopData(apiKey, shopId);
+
+      // Fetch listings with real progress
+      setSyncProgress({ current: 20, total: 111, status: 'Loading listings...' });
+      const listings = await fetchListings(apiKey, shopId, (current, total, status) => {
+        setSyncProgress({ current, total, status });
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const listings = data.results || [];
+      if (listings.length > 0) {
         setSyncedData(listings);
-        try {
-          localStorage.setItem('stylinsoul_listings', JSON.stringify(listings));
-        } catch (e) {}
-        setStatusMessage(`Sync complete! Loaded ${listings.length} listings from Etsy.`);
+        setStatusMessage(`✅ Sync complete! Loaded ${listings.length} listings from Etsy.`);
+        
+        // Fetch receipts for revenue data
+        setSyncProgress({ current: listings.length, total: listings.length, status: 'Fetching order history...' });
+        await fetchReceipts(apiKey, shopId);
+        
+        setStatusMessage(`✅ Sync complete! ${listings.length} listings and order history loaded.`);
       } else {
-        // API call failed, use demo data
-        throw new Error('API call failed');
+        setStatusMessage('Sync complete but no listings found.');
       }
-    } catch (err) {
-      // CORS or API error - load demo data
-      const demoListings = generateDemoListings();
-      setSyncedData(demoListings);
-      try {
-        localStorage.setItem('stylinsoul_listings', JSON.stringify(demoListings));
-      } catch (e) {}
-      setStatusMessage(`Sync complete! Loaded ${demoListings.length} listings (demo mode - Etsy API requires server-side proxy for browser access).`);
+    } catch (err: any) {
+      setStatusMessage(`Sync failed: ${err.message || 'Unknown error'}`);
     }
 
     setSyncing(false);
   };
 
-  const generateDemoListings = () => {
-    // Generate realistic demo data based on your actual shop
-    return [
-      { listing_id: 4574987714, title: 'Personalized Dog Remembrance Gift Metal Sign', views: 234, favorites: 18, sales: 3, price: 35.74 },
-      { listing_id: 4564833513, title: 'Taxidermist Metal Sign Custom Deer Hunter', views: 145, favorites: 7, sales: 0, price: 35.74 },
-      { listing_id: 4570548846, title: 'Gym Sign Custom Metal Wall Art', views: 2234, favorites: 156, sales: 38, price: 35.74 },
-      { listing_id: 4570542624, title: 'Pet Groomer Metal Sign', views: 189, favorites: 12, sales: 2, price: 35.74 },
-      { listing_id: 4562938415, title: 'Personalized Greenhouse Door Decor', views: 167, favorites: 9, sales: 1, price: 35.74 },
-      { listing_id: 1282911262, title: 'Personalized 50th Anniversary Metal Sign', views: 2845, favorites: 189, sales: 45, price: 35.74 },
-      { listing_id: 1541489678, title: 'Personalized Gym Metal Sign - Barbell Plate', views: 2234, favorites: 156, sales: 38, price: 35.74 },
-      { listing_id: 4350686512, title: 'Biker Anniversary Gift Metal Sign', views: 456, favorites: 28, sales: 5, price: 35.74 },
-      { listing_id: 4347543891, title: 'Welsh Corgi Metal Wall Art', views: 234, favorites: 8, sales: 1, price: 35.74 },
-      { listing_id: 4347536324, title: 'Personalized Welsh Corgi Metal Sign', views: 198, favorites: 6, sales: 0, price: 35.74 },
-    ];
-  };
+
 
   const handleDisconnect = () => {
     setConnected(false);
@@ -250,12 +191,8 @@ export default function ApiSettings() {
     setStatus('idle');
     setStatusMessage('');
     setSaved(false);
-    try {
-      localStorage.removeItem(STORAGE_KEY_API);
-      localStorage.removeItem(STORAGE_KEY_SECRET);
-      localStorage.removeItem(STORAGE_KEY_SHOP);
-      localStorage.removeItem(STORAGE_KEY_CONNECTED);
-    } catch (e) {}
+    setSyncedData(null);
+    clearAllData();
   };
 
   const handleGetApiKey = () => {
@@ -512,7 +449,7 @@ export default function ApiSettings() {
                 <CheckCircle className="w-5 h-5" />
                 Synced Listings ({syncedData.length})
               </h4>
-              <span className="text-xs text-green-600">Last synced: Just now</span>
+              <span className="text-xs text-green-600">Last synced: {new Date().toLocaleString()}</span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
               <div className="bg-white rounded-lg p-2">
@@ -524,12 +461,12 @@ export default function ApiSettings() {
                 <p className="text-xs text-gray-500">Total Views</p>
               </div>
               <div className="bg-white rounded-lg p-2">
-                <p className="text-lg font-bold text-gray-800">{syncedData.reduce((sum: number, l: any) => sum + (l.favorites || 0), 0).toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-800">{syncedData.reduce((sum: number, l: any) => sum + (l.num_favorers || 0), 0).toLocaleString()}</p>
                 <p className="text-xs text-gray-500">Total Favorites</p>
               </div>
               <div className="bg-white rounded-lg p-2">
-                <p className="text-lg font-bold text-gray-800">{syncedData.reduce((sum: number, l: any) => sum + (l.sales || 0), 0)}</p>
-                <p className="text-xs text-gray-500">Total Sales</p>
+                <p className="text-lg font-bold text-gray-800">${(syncedData.reduce((sum: number, l: any) => sum + ((l.price?.amount || 0) / (l.price?.divisor || 100)), 0) / Math.max(syncedData.length, 1)).toFixed(2)}</p>
+                <p className="text-xs text-gray-500">Avg Price</p>
               </div>
             </div>
             <div className="mt-3 max-h-40 overflow-y-auto">
@@ -539,7 +476,8 @@ export default function ApiSettings() {
                     <th className="p-2">Title</th>
                     <th className="p-2 text-right">Views</th>
                     <th className="p-2 text-right">Favs</th>
-                    <th className="p-2 text-right">Sales</th>
+                    <th className="p-2 text-right">Price</th>
+                    <th className="p-2 text-right">Tags</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -547,8 +485,9 @@ export default function ApiSettings() {
                     <tr key={i} className="border-t border-green-100">
                       <td className="p-2 text-gray-800 truncate max-w-xs">{listing.title}</td>
                       <td className="p-2 text-right text-gray-600">{listing.views}</td>
-                      <td className="p-2 text-right text-gray-600">{listing.favorites}</td>
-                      <td className="p-2 text-right text-gray-600">{listing.sales}</td>
+                      <td className="p-2 text-right text-gray-600">{listing.num_favorers}</td>
+                      <td className="p-2 text-right text-gray-600">${((listing.price?.amount || 0) / (listing.price?.divisor || 100)).toFixed(2)}</td>
+                      <td className="p-2 text-right text-gray-600">{listing.tags?.length || 0}/13</td>
                     </tr>
                   ))}
                 </tbody>
@@ -616,8 +555,8 @@ export default function ApiSettings() {
         <h3 className="font-semibold text-gray-800 mb-4">What the API Unlocks for StylinsoulMetalArt</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            { t: `Sync All ${syncedData ? syncedData.length : 111} Listings`, d: syncedData ? `Loaded ${syncedData.length} listings` : 'Pull real-time data for every metal sign', on: !!syncedData },
-            { t: 'Auto-Optimize Titles & Tags', d: 'Push improved SEO directly to Etsy', on: !!syncedData },
+            { t: `Sync All ${syncedData ? syncedData.length : 0} Listings`, d: syncedData ? `Loaded ${syncedData.length} real listings from Etsy` : 'Pull real-time data for every metal sign', on: !!syncedData },
+            { t: 'Auto-Optimize Titles & Tags', d: 'Analyze and improve SEO for each listing', on: !!syncedData },
             { t: 'Track Views & Favorites', d: syncedData ? `${syncedData.reduce((s: number, l: any) => s + (l.views || 0), 0).toLocaleString()} total views tracked` : 'Real-time performance data per listing', on: !!syncedData },
             { t: 'Publish New Listings', d: 'Create optimized listings from this tool', on: connected },
             { t: 'Manage Size Variants', d: 'Update pricing for different sizes', on: connected },
@@ -644,6 +583,28 @@ export default function ApiSettings() {
               Your API key and shared secret are stored <strong>only in your browser's local storage</strong>. 
               They are never sent to any third-party server. They persist even after closing the browser. 
               Click "Clear All Saved Data" to remove them anytime.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* CORS / Backend Proxy Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-blue-800 text-sm">About API Access & CORS</h4>
+            <p className="text-xs text-blue-700 mt-1 mb-2">
+              Etsy's API blocks direct browser requests (CORS). This tool tries public CORS proxies first. 
+              If those fail, you'll need a simple backend proxy. Here's how:
+            </p>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p><strong>Option 1:</strong> Use a free proxy like <code className="bg-blue-100 px-1 rounded">corsproxy.io</code> (tried automatically)</p>
+              <p><strong>Option 2:</strong> Deploy a simple Node.js proxy on Vercel/Railway (10 lines of code)</p>
+              <p><strong>Option 3:</strong> Use Etsy's OAuth flow with a backend server for full access</p>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              💡 The tool works in <strong>demo mode</strong> with realistic data if the API is blocked.
             </p>
           </div>
         </div>
