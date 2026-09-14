@@ -6,12 +6,12 @@ import {
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const revenueData = [
-  { month: 'Jul', sales: 35, revenue: 1251 },
-  { month: 'Aug', sales: 42, revenue: 1501 },
-  { month: 'Sep', sales: 58, revenue: 2073 },
-  { month: 'Oct', sales: 72, revenue: 2573 },
-  { month: 'Nov', sales: 85, revenue: 3038 },
-  { month: 'Dec', sales: 95, revenue: 3395 },
+  { month: 'Jul', sales: 18, revenue: 643 },
+  { month: 'Aug', sales: 22, revenue: 786 },
+  { month: 'Sep', sales: 28, revenue: 1001 },
+  { month: 'Oct', sales: 35, revenue: 1251 },
+  { month: 'Nov', sales: 42, revenue: 1501 },
+  { month: 'Dec', sales: 48, revenue: 1715 },
 ];
 
 const viewsData = [
@@ -65,9 +65,9 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Eye className="w-5 h-5" />} label="Views (30d)" value="14,820" change="+18%" positive={true} color="blue" />
-        <StatCard icon={<Heart className="w-5 h-5" />} label="Total Favorites" value="856" change="+12%" positive={true} color="pink" />
-        <StatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue (30d)" value="$3,395" change="+12%" positive={true} color="green" />
+        <StatCard icon={<Eye className="w-5 h-5" />} label="Views (30d)" value="8,450" change="+15%" positive={true} color="blue" />
+        <StatCard icon={<Heart className="w-5 h-5" />} label="Total Favorites" value="425" change="+10%" positive={true} color="pink" />
+        <StatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue (30d)" value="$1,715" change="+14%" positive={true} color="green" />
         <StatCard icon={<Package className="w-5 h-5" />} label="Active Listings" value="111" change="+8" positive={true} color="purple" />
       </div>
 
@@ -117,7 +117,7 @@ export default function Dashboard() {
               <p className="text-xl font-bold text-gray-800">$35.74</p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Same price all items</span>
+              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Flat pricing</span>
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-2">💡 Offer size variants to increase AOV to $50+</p>
@@ -235,7 +235,8 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-5 text-white">
         <div className="flex items-center gap-3 mb-3">
           <Flame className="w-6 h-6" />
-          <h3 className="font-bold text-lg">Quick Wins for This Week</h3>
+          <h3 className="font-bold text-lg">Quick Wins to Boost Revenue</h3>
+          <span className="text-sm bg-white/20 px-2 py-0.5 rounded-full">Potential +$900/month</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
