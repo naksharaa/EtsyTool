@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, CheckCircle, XCircle, ExternalLink, RefreshCw } from 'lucide-react';
-import { getStoredListings } from '../services/etsyApi';
+import { Search, AlertCircle, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 
 export default function ListingOptimizer() {
   const [listings, setListings] = useState<any[]>([]);
@@ -9,8 +8,17 @@ export default function ListingOptimizer() {
   const [expandedListing, setExpandedListing] = useState<number | null>(null);
 
   useEffect(() => {
-    const storedListings = getStoredListings();
-    setListings(storedListings);
+    try {
+      const stored = localStorage.getItem('etsy_listings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setListings(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load listings');
+    }
   }, []);
 
   if (listings.length === 0) {
@@ -27,7 +35,6 @@ export default function ListingOptimizer() {
     );
   }
 
-  // Analyze each listing
   const analyzedListings = listings.map(listing => {
     const score = calculateListingScore(listing);
     const issues = identifyIssues(listing);
@@ -56,14 +63,11 @@ export default function ListingOptimizer() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Listing Optimizer</h1>
-          <p className="text-gray-600 text-sm mt-1">Analyze and optimize your {listings.length} listings</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-800">Listing Optimizer</h1>
+        <p className="text-gray-600 text-sm mt-1">Analyze and optimize your {listings.length} listings</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600">Total Listings</p>
@@ -83,7 +87,6 @@ export default function ListingOptimizer() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
@@ -114,7 +117,6 @@ export default function ListingOptimizer() {
         </div>
       </div>
 
-      {/* Listings */}
       <div className="space-y-4">
         {filteredListings.map(listing => (
           <div key={listing.listing_id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -129,7 +131,7 @@ export default function ListingOptimizer() {
                   <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                     <span>{listing.views} views</span>
                     <span>{listing.num_favorers} favorites</span>
-                    <span>${(listing.price.amount / listing.price.divisor).toFixed(2)}</span>
+                    <span>${((listing.price?.amount || 0) / (listing.price?.divisor || 100)).toFixed(2)}</span>
                     <span>{listing.tags?.length || 0}/13 tags</span>
                   </div>
                 </div>
@@ -151,7 +153,6 @@ export default function ListingOptimizer() {
             {expandedListing === listing.listing_id && (
               <div className="border-t border-gray-200 p-4 bg-gray-50">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Issues */}
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
                       <XCircle className="w-4 h-4 text-red-500" />
@@ -171,7 +172,6 @@ export default function ListingOptimizer() {
                     )}
                   </div>
 
-                  {/* Suggestions */}
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -188,7 +188,6 @@ export default function ListingOptimizer() {
                   </div>
                 </div>
 
-                {/* Tags */}
                 {listing.tags && listing.tags.length > 0 && (
                   <div className="mt-4">
                     <h4 className="font-semibold text-gray-800 mb-2">Tags ({listing.tags.length}/13)</h4>
@@ -202,17 +201,18 @@ export default function ListingOptimizer() {
                   </div>
                 )}
 
-                {/* Actions */}
                 <div className="mt-4 flex gap-2">
-                  <a
-                    href={listing.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    View on Etsy
-                  </a>
+                  {listing.url && (
+                    <a
+                      href={listing.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View on Etsy
+                    </a>
+                  )}
                 </div>
               </div>
             )}
@@ -226,34 +226,28 @@ export default function ListingOptimizer() {
 function calculateListingScore(listing: any): number {
   let score = 0;
 
-  // Title length (0-20 points)
   const titleLength = listing.title?.length || 0;
   if (titleLength >= 80 && titleLength <= 140) score += 20;
   else if (titleLength >= 40) score += 10;
   else if (titleLength > 0) score += 5;
 
-  // Description length (0-20 points)
   const descLength = listing.description?.length || 0;
   if (descLength >= 300) score += 20;
   else if (descLength >= 150) score += 10;
   else if (descLength > 0) score += 5;
 
-  // Tags (0-25 points)
   const tagCount = listing.tags?.length || 0;
   if (tagCount >= 13) score += 25;
   else if (tagCount >= 8) score += 15;
   else if (tagCount >= 1) score += 5;
 
-  // Price (0-10 points)
   if (listing.price && listing.price.amount > 0) score += 10;
 
-  // Images (0-15 points)
   const imageCount = listing.images?.length || 0;
   if (imageCount >= 5) score += 15;
   else if (imageCount >= 3) score += 10;
   else if (imageCount >= 1) score += 5;
 
-  // Views and favorites (0-10 points)
   if ((listing.views || 0) > 100) score += 5;
   if ((listing.num_favorers || 0) > 10) score += 5;
 

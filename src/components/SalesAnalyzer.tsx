@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, TrendingDown, Eye, Heart, ShoppingCart, Target, Lightbulb, CheckCircle, Search, DollarSign, Clock, Image, Tag, FileText, BarChart3 } from 'lucide-react';
-import { getStoredListings, getStoredReceipts } from '../services/etsyApi';
 
 export default function SalesAnalyzer() {
   const [listings, setListings] = useState<any[]>([]);
-  const [receipts, setReceipts] = useState<any[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<any | null>(null);
 
   useEffect(() => {
-    const storedListings = getStoredListings();
-    const storedReceipts = getStoredReceipts();
-    setListings(storedListings);
-    setReceipts(storedReceipts);
+    try {
+      const stored = localStorage.getItem('etsy_listings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setListings(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load listings');
+    }
   }, []);
 
   if (listings.length === 0) {
@@ -28,10 +33,8 @@ export default function SalesAnalyzer() {
     );
   }
 
-  // Calculate conversion funnel
   const totalViews = listings.reduce((sum, l) => sum + (l.views || 0), 0);
   const totalFavorites = listings.reduce((sum, l) => sum + (l.num_favorers || 0), 0);
-  const totalSales = receipts.length;
   const addToCartEstimate = Math.round(totalFavorites * 0.3);
 
   const conversionFunnel = [
@@ -39,10 +42,9 @@ export default function SalesAnalyzer() {
     { stage: 'Views', count: totalViews, fill: '#fdba74' },
     { stage: 'Favorites', count: totalFavorites, fill: '#fb923c' },
     { stage: 'Add to Cart', count: addToCartEstimate, fill: '#f97316' },
-    { stage: 'Purchases', count: totalSales, fill: '#ea580c' },
+    { stage: 'Purchases', count: listings.length, fill: '#ea580c' },
   ];
 
-  // Analyze listings for issues
   const problemListings = listings
     .map(listing => {
       const views = listing.views || 0;
@@ -84,7 +86,6 @@ export default function SalesAnalyzer() {
         <p className="text-gray-600 text-sm mt-1">Analyze your shop's performance and identify issues</p>
       </div>
 
-      {/* Conversion Funnel */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-orange-500" />
@@ -115,7 +116,6 @@ export default function SalesAnalyzer() {
         </div>
       </div>
 
-      {/* Problem Listings */}
       {problemListings.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -159,7 +159,6 @@ export default function SalesAnalyzer() {
         </div>
       )}
 
-      {/* Common Issues */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-yellow-500" />
@@ -205,7 +204,6 @@ export default function SalesAnalyzer() {
         </div>
       </div>
 
-      {/* Revenue Opportunity */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-5 text-white">
         <h2 className="font-bold text-lg mb-3">💰 Revenue Opportunity</h2>
         <p className="text-green-100 text-sm mb-4">Estimated monthly increase if you fix all issues:</p>
