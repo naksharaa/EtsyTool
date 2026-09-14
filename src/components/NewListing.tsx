@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, Wand2, Tag, FileText, Image, DollarSign, Package, CheckCircle, AlertCircle, Lightbulb, Sparkles, ArrowRight } from 'lucide-react';
+import { Wand2, FileText, DollarSign, Package, CheckCircle, AlertCircle, Lightbulb, Sparkles, ArrowRight } from 'lucide-react';
 
 type ListingFormDataType = {
   title: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  AlertTriangle, Eye, Heart, ShoppingCart, Target, Lightbulb, CheckCircle, Search, DollarSign, Clock, Image, Tag, FileText, BarChart3
+  AlertTriangle, Eye, ShoppingCart, Target, Lightbulb, CheckCircle, Search, DollarSign, Clock, Image, Tag, FileText, BarChart3
 } from 'lucide-react';
 
 interface ListingAnalysis {
