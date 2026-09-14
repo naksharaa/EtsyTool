@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Heart, DollarSign, Package, TrendingUp, TrendingDown, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { getStoredListings, getStoredShop, getStoredReceipts, calculateRevenue } from '../services/etsyApi';
+import { Eye, Heart, DollarSign, Package, ExternalLink } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Dashboard() {
   const [listings, setListings] = useState<any[]>([]);
   const [shop, setShop] = useState<any>(null);
-  const [receipts, setReceipts] = useState<any[]>([]);
-  const [revenue, setRevenue] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load real data from localStorage
-    const storedListings = getStoredListings();
-    const storedShop = getStoredShop();
-    const storedReceipts = getStoredReceipts();
+    try {
+      const storedListings = localStorage.getItem('etsy_listings');
+      const storedShop = localStorage.getItem('etsy_shop_data');
 
-    setListings(storedListings);
-    setShop(storedShop);
-    setReceipts(storedReceipts);
+      if (storedListings) {
+        const parsed = JSON.parse(storedListings);
+        if (Array.isArray(parsed)) {
+          setListings(parsed);
+        }
+      }
 
-    if (storedListings.length > 0) {
-      const revenueData = calculateRevenue(storedListings);
-      setRevenue(revenueData);
+      if (storedShop) {
+        setShop(JSON.parse(storedShop));
+      }
+    } catch (e) {
+      console.error('Failed to load data');
     }
 
     setLoading(false);
@@ -39,7 +40,6 @@ export default function Dashboard() {
     );
   }
 
-  // If no real data, show empty state
   if (listings.length === 0) {
     return (
       <div className="p-6">
@@ -63,33 +63,30 @@ export default function Dashboard() {
     );
   }
 
-  // Calculate real stats
   const totalViews = listings.reduce((sum, l) => sum + (l.views || 0), 0);
   const totalFavorites = listings.reduce((sum, l) => sum + (l.num_favorers || 0), 0);
   const avgPrice = listings.length > 0
-    ? listings.reduce((sum, l) => sum + (l.price.amount / l.price.divisor), 0) / listings.length
+    ? listings.reduce((sum, l) => sum + ((l.price?.amount || 0) / (l.price?.divisor || 100)), 0) / listings.length
     : 0;
 
-  // Prepare chart data
-  const monthlyData = revenue?.monthlyData || [];
-  const categoryData = prepareCategoryData(listings);
   const topListings = [...listings]
     .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, 5);
 
+  const categoryData = prepareCategoryData(listings);
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">
             {shop ? `Welcome back, ${shop.shop_name}!` : 'Dashboard'}
           </h1>
           <p className="text-gray-600 text-sm mt-1">
-            {shop ? `${shop.sale_count} total sales · ${shop.average_rating?.toFixed(1)}★ rating` : 'Real-time shop data'}
+            {shop ? `${shop.sale_count || 0} total sales · ${(shop.average_rating || 0).toFixed(1)}★ rating` : 'Real-time shop data'}
           </p>
         </div>
-        {shop && (
+        {shop?.url && (
           <a
             href={shop.url}
             target="_blank"
@@ -102,7 +99,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<Eye className="w-5 h-5" />}
@@ -130,23 +126,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Revenue Chart */}
-      {monthlyData.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Monthly Revenue (Estimated)</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
-              <Bar dataKey="revenue" fill="#f97316" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Category Distribution */}
       {categoryData.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Category Distribution</h2>
@@ -174,7 +153,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Top Listings */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Top 5 Listings by Views</h2>
         <div className="space-y-3">
@@ -187,24 +165,25 @@ export default function Dashboard() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-800 text-sm line-clamp-1">{listing.title}</p>
                   <p className="text-xs text-gray-500">
-                    ${(listing.price.amount / listing.price.divisor).toFixed(2)} · {listing.views} views · {listing.num_favorers} favorites
+                    ${((listing.price?.amount || 0) / (listing.price?.divisor || 100)).toFixed(2)} · {listing.views} views · {listing.num_favorers} favorites
                   </p>
                 </div>
               </div>
-              <a
-                href={listing.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-orange-600 hover:text-orange-700"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
+              {listing.url && (
+                <a
+                  href={listing.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 hover:text-orange-700"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Shop Info */}
       {shop && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Shop Information</h2>
@@ -215,22 +194,16 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Sales</p>
-              <p className="font-medium text-gray-800">{shop.sale_count}</p>
+              <p className="font-medium text-gray-800">{shop.sale_count || 0}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Rating</p>
-              <p className="font-medium text-gray-800">{shop.average_rating?.toFixed(1)}★ ({shop.review_count} reviews)</p>
+              <p className="font-medium text-gray-800">{(shop.average_rating || 0).toFixed(1)}★ ({shop.review_count || 0} reviews)</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Shop Favorites</p>
-              <p className="font-medium text-gray-800">{shop.num_favorers}</p>
+              <p className="font-medium text-gray-800">{shop.num_favorers || 0}</p>
             </div>
-            {shop.title && (
-              <div className="md:col-span-2">
-                <p className="text-sm text-gray-600">Description</p>
-                <p className="text-gray-800 text-sm">{shop.title}</p>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -266,7 +239,7 @@ function prepareCategoryData(listings: any[]) {
   const colors = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4', '#ec4899'];
 
   listings.forEach(listing => {
-    const category = listing.category_path?.[0] || 'Other';
+    const category = listing.tags?.[0] || 'Other';
     categories[category] = (categories[category] || 0) + 1;
   });
 
