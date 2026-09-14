@@ -88,11 +88,11 @@ const analyses: ListingAnalysis[] = [
 ];
 
 const conversionFunnel = [
-  { stage: 'Impressions', count: 85000, fill: '#fed7aa' },
-  { stage: 'Views', count: 21450, fill: '#fdba74' },
-  { stage: 'Favorites', count: 1847, fill: '#fb923c' },
-  { stage: 'Add to Cart', count: 420, fill: '#f97316' },
-  { stage: 'Purchases', count: 168, fill: '#ea580c' },
+  { stage: 'Impressions', count: 48500, fill: '#fed7aa' },
+  { stage: 'Views', count: 14820, fill: '#fdba74' },
+  { stage: 'Favorites', count: 856, fill: '#fb923c' },
+  { stage: 'Add to Cart', count: 285, fill: '#f97316' },
+  { stage: 'Purchases', count: 95, fill: '#ea580c' },
 ];
 
 export default function SalesAnalyzer() {
@@ -145,10 +145,10 @@ export default function SalesAnalyzer() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-            <strong>✅ Strength:</strong> Your view-to-favorite rate (8.6%) is strong — buyers LOVE your product photos and designs.
+            <strong>✅ Strength:</strong> Your view-to-favorite rate (5.8%) is strong — buyers LOVE your product photos and designs.
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-            <strong>⚠️ Issue:</strong> Cart-to-purchase rate (40%) is okay, but AOV is flat at $35.74 — you're leaving money on the table with no size upsells.
+            <strong>⚠️ Issue:</strong> Cart-to-purchase rate (33%) needs improvement, and AOV is flat at $35.74 — you're leaving money on the table with no size upsells.
           </div>
         </div>
       </div>
@@ -259,23 +259,23 @@ export default function SalesAnalyzer() {
         <p className="text-green-100 text-sm mb-4">If you implement all recommended fixes, here's the estimated monthly impact:</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm text-center">
-            <p className="text-2xl font-bold">+$800</p>
+            <p className="text-2xl font-bold">+$400</p>
             <p className="text-xs text-green-100">From consolidating duplicates</p>
           </div>
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm text-center">
-            <p className="text-2xl font-bold">+$1,200</p>
+            <p className="text-2xl font-bold">+$600</p>
             <p className="text-xs text-green-100">From size variant upsells</p>
           </div>
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm text-center">
-            <p className="text-2xl font-bold">+$600</p>
+            <p className="text-2xl font-bold">+$350</p>
             <p className="text-xs text-green-100">From new niche listings</p>
           </div>
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm text-center">
-            <p className="text-2xl font-bold">+$400</p>
+            <p className="text-2xl font-bold">+$250</p>
             <p className="text-xs text-green-100">From SEO improvements</p>
           </div>
         </div>
-        <p className="text-sm text-green-100 mt-4 font-medium">Total estimated monthly increase: <span className="text-white text-lg font-bold">+$3,000</span> (50% revenue growth)</p>
+        <p className="text-sm text-green-100 mt-4 font-medium">Total estimated monthly increase: <span className="text-white text-lg font-bold">+$1,600</span> (47% revenue growth)</p>
       </div>
     </div>
   );
